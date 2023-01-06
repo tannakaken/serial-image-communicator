@@ -1,0 +1,33 @@
+import path from 'node:path';
+import { BrowserWindow, ipcMain ,app, IpcMainInvokeEvent } from 'electron';
+import { SerialPort } from 'serialport';
+import { IPC_KEYS } from "./constants";
+import { sendSerialMessage } from './serial-image-transfer';
+
+ipcMain.handle(IPC_KEYS.REQUEST_PORTS_LIST, async (event: IpcMainInvokeEvent) => {
+  SerialPort.list().then((portsList) => {
+    event.sender.send(IPC_KEYS.GET_PORTS_LIST_RESPONSE, portsList);
+  });
+});
+ipcMain.handle(IPC_KEYS.SEND_SERIAL_MESSAGE, async (event: IpcMainInvokeEvent, port: string) => {
+  sendSerialMessage(port, (fileName, base64String) => {
+    event.sender.send(IPC_KEYS.GET_SERIAL_RESPONSE, fileName, base64String);
+  })
+})
+
+app.whenReady().then(() => {
+  // アプリの起動イベント発火で BrowserWindow インスタンスを作成
+  const mainWindow = new BrowserWindow({
+    title: 'マイアプリ',
+    webPreferences: {
+      // webpack が出力したプリロードスクリプトを読み込み
+      preload: path.join(__dirname, 'preload.js'),
+    },
+  });
+  
+  // レンダラープロセスをロード
+  mainWindow.loadFile('dist/index.html');
+});
+
+// すべてのウィンドウが閉じられたらアプリを終了する
+app.once('window-all-closed', () => app.quit());
