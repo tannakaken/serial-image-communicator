@@ -6,12 +6,18 @@ import ReactLoading from "react-loading";
 const { nativeApi } = window;
 export const App = () => {
   const [portsList, setPortsList] = useState<{ path: string }[]>([]);
+  const [portName, setPortName] = useState<string | undefined>(undefined);
   useEffect(() => {
-    nativeApi.requestPortsList((list) => setPortsList(list));
+    nativeApi.requestPortsList((list) => {
+      setPortsList(list);
+      if (list.length === 1) {
+        setPortName(list[0].path);
+      }
+    });
   }, []);
   const [metadata, setMetadata] = useState("");
   const [image, setImage] = useState<string>(noImage);
-  const [portName, setPortName] = useState<string | undefined>(undefined);
+  
   const [sending, setSending] = useState(false);
   return (
     <div className="container">
