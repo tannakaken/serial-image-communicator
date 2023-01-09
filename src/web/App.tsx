@@ -15,6 +15,17 @@ export const App = () => {
       }
     });
   }, []);
+  const [connecting, setConnecting] = useState(false);
+  const [connectOk, setConnectOk] = useState(false);
+  useEffect(() => {
+    if (portName) {
+      setConnecting(true);
+      nativeApi.connectSerial(portName, (ok) => {
+        setConnecting(false);
+        setConnectOk(ok);
+      })
+    }
+  }, [portName]);
   const [metadata, setMetadata] = useState("");
   const [image, setImage] = useState<string>(noImage);
   
@@ -33,17 +44,19 @@ export const App = () => {
           </option>
         ))}
       </select>
+      {portName !== undefined && !connecting && !connectOk && (
+        <div style={{color: "red"}}><p>ポートに接続できません。</p></div>
+      )}
       <img src={image} width="80%" height="80%" />
       <p>{metadata}</p>
       <button
-        disabled={portName === undefined || sending}
+        disabled={portName === undefined || sending || connecting || !connectOk}
         onClick={() => {
           if (portName === undefined) {
             return;
           }
           setSending(true);
           nativeApi.sendSerialMessage(
-            portName,
             (metadata, base64String, hasError) => {
               setMetadata(metadata);
               if (hasError) {
@@ -58,7 +71,7 @@ export const App = () => {
       >
         更新
       </button>
-      {sending && (
+      {(sending || connecting) && (
         <div
           style={{
             position: "fixed",

@@ -1,18 +1,35 @@
 import { SerialPort } from 'serialport';
 
-export const sendSerialMessage = (portName: string, listener: (metadata: string, base64String: string, hasError?: boolean) => void) => {
-  const sp = new SerialPort({
-      path: portName,
-      baudRate: 115200,
-      //dataBits: 8,
-      //stopBits: 1,
+let sp: SerialPort | undefined;
+
+// シリアルにつなげた最初の通信にそれなりに時間がかかる。
+// シリアル接続初回にspresense側でGPS情報の取得に失敗することがある。
+// シリアルに毎回つなげる仕方だとGPS情報の取得に必ず失敗する。
+export const connectSerial = (portName: string, callback: (ok:  boolean) => void) => {
+  sp = new SerialPort({
+    path: portName,
+    baudRate: 115200,
+    //dataBits: 8,
+    //stopBits: 1,
   });
+  sp.on('open', () => {
+    callback(true);
+  });
+  sp.on('error', function(error) {
+    console.warn(error);
+    callback(false);
+  });
+};
+
+export const sendSerialMessage = (listener: (metadata: string, base64String: string, hasError?: boolean) => void) => {
+  if (sp === undefined) {
+    return;
+  }
 
   let str = "";
   let metadataWaiting = true;
   let metadata = "";
   let fileBodyWaiting = false;
-  let finished = false;
 
   const processString = (input: any, callback: (completeString: string) => void) => {
       str += input.toString();
@@ -29,11 +46,9 @@ export const sendSerialMessage = (portName: string, listener: (metadata: string,
           if (completedString.startsWith("image not found")) {
             console.warn(completedString);
             listener(completedString, "", true)
-            sp.close();
             return;
           }
           if (completedString.startsWith("SpGnss E: Failed to read position data")) {
-            // なぜGPSデータがとれたり取れなかったりするかはよくわかってない。
             console.warn(completedString);
             return;
           }
@@ -50,40 +65,19 @@ export const sendSerialMessage = (portName: string, listener: (metadata: string,
           } else {
             listener(metadata, completedString);
           }
-          sp.close();
-          finished = true;
+          str = "";
+          metadata = "";
+          metadataWaiting = true;
+          fileBodyWaiting = false;
         });
       }
   });
 
-  const sendMessage = () => {
-    if (sp.closed) {
-      return;
+  sp.write('>', (error) => {
+    if (error) {
+      console.warn(error);
+    } else {
+      console.warn("send");
     }
-    sp.write('>', (error) => {
-      if (error) {
-        console.warn(error);
-      } else {
-        console.warn("send");
-      }
-    });
-  }
-
-  sp.on('open', () => {
-    console.warn("open");
-    setTimeout(() => {
-      sendMessage();
-      setTimeout(() => {
-        if (finished) {
-          return;
-        }
-        listener("Timeout", "", true);
-        sp.close();
-      }, 10000);
-    }, 3000);
   });
-
-  sp.on('error', function(err) {
-    console.log('Error: ', err.message)
-  })
 };
