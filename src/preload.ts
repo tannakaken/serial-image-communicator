@@ -22,9 +22,9 @@ contextBridge.exposeInMainWorld(NATIVE_API, {
       ipcRenderer.removeAllListeners(IPC_KEYS.GET_CONNECT_SERIAL_RESULT);
     }
   },
-  sendSerialMessage: (listener: (metadata: string, base64String: string, hasError?: boolean) => void) => {
-    ipcRenderer.addListener(IPC_KEYS.GET_SERIAL_RESPONSE, (event: IpcRendererEvent, metadata: string, base64String: string) => {
-      listener(metadata, base64String);
+  sendSerialMessage: (listener: (metadata: string, base64String: string, voltageData: number[], hasError?: boolean) => void) => {
+    ipcRenderer.addListener(IPC_KEYS.GET_SERIAL_RESPONSE, (event: IpcRendererEvent, metadata: string, base64String: string, voltageData: number[]) => {
+      listener(metadata, base64String, voltageData);
     });
     ipcRenderer.invoke(IPC_KEYS.SEND_SERIAL_MESSAGE);
     return () => {

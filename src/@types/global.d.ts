@@ -12,5 +12,5 @@ type Port = {
 export interface IAPI {
     requestPortsList: (listner: (portsList: Port[]) => void) => void;
     connectSerial: (portName: string, callback: (ok: boolean) => void) => void;
-    sendSerialMessage: (listener: (fileName: string, base64String: string, hasError?: boolean) => void) => void;
+    sendSerialMessage: (listener: (fileName: string, base64String: string, voltageData: number[], hasError?: boolean) => void) => void;
 }

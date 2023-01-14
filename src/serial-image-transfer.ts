@@ -21,7 +21,7 @@ export const connectSerial = (portName: string, callback: (ok:  boolean) => void
   });
 };
 
-export const sendSerialMessage = (listener: (metadata: string, base64String: string, hasError?: boolean) => void) => {
+export const sendSerialMessage = (listener: (metadata: string, base64String: string, voltageData: number[], hasError?: boolean) => void) => {
   if (sp === undefined) {
     return;
   }
@@ -29,7 +29,9 @@ export const sendSerialMessage = (listener: (metadata: string, base64String: str
   let str = "";
   let metadataWaiting = true;
   let metadata = "";
-  let fileBodyWaiting = false;
+  let imageDataWaiting = false;
+  let base64String = "";
+  let voltageDataWaiting = false;
 
   const processString = (input: any, callback: (completeString: string) => void) => {
       str += input.toString();
@@ -45,7 +47,7 @@ export const sendSerialMessage = (listener: (metadata: string, base64String: str
         processString(input, (completedString) => {
           if (completedString.startsWith("image not found")) {
             console.warn(completedString);
-            listener(completedString, "", true)
+            listener(completedString, "", [], true)
             return;
           }
           if (completedString.startsWith("SpGnss E: Failed to read position data")) {
@@ -55,21 +57,30 @@ export const sendSerialMessage = (listener: (metadata: string, base64String: str
           metadata = completedString;
           console.warn("metadata: ", metadata);
           metadataWaiting = false;
-          fileBodyWaiting = true;
+          imageDataWaiting = true;
         });
-      } else if (fileBodyWaiting) {
+      } else if (imageDataWaiting) {
         processString(input, (completedString) => {
           console.warn("base64String: ", completedString);
-          if (completedString.startsWith("image not  found")) {
+          if (completedString.startsWith("image not found")) {
             console.warn(completedString);
           } else {
-            listener(metadata, completedString);
+            base64String = completedString;
+            imageDataWaiting = false;
+            voltageDataWaiting = true;
           }
+        });
+      } else if (voltageDataWaiting) {
+        processString(input, (completedString) => {
+          const voltageData = completedString.split(",").map((str) => parseInt(str, 10)).filter((num) => !isNaN(num));
+          console.warn(voltageData);
+          listener(metadata, base64String, voltageData);
           str = "";
           metadata = "";
+          base64String = "";
           metadataWaiting = true;
-          fileBodyWaiting = false;
-        });
+          voltageDataWaiting = false;
+        });  
       }
   });
 

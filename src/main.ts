@@ -15,8 +15,8 @@ ipcMain.handle(IPC_KEYS.CONNECT_SERIAL, async (event: IpcMainInvokeEvent, portNa
   });
 });
 ipcMain.handle(IPC_KEYS.SEND_SERIAL_MESSAGE, async (event: IpcMainInvokeEvent) => {
-  sendSerialMessage((fileName, base64String) => {
-    event.sender.send(IPC_KEYS.GET_SERIAL_RESPONSE, fileName, base64String);
+  sendSerialMessage((metadata, base64String, voltageData) => {
+    event.sender.send(IPC_KEYS.GET_SERIAL_RESPONSE, metadata, base64String, voltageData);
   })
 });
 
@@ -28,6 +28,7 @@ app.whenReady().then(() => {
       // webpack が出力したプリロードスクリプトを読み込み
       preload: path.join(__dirname, 'preload.js'),
     },
+    fullscreen: true,
   });
   
   // レンダラープロセスをロード
