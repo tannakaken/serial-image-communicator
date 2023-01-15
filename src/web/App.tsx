@@ -125,6 +125,12 @@ export const App = () => {
       </div>
       <button
         disabled={portName === undefined || sending || connecting || !connectOk}
+        style={{
+          paddingTop: "10px",
+          paddingBottom: "10px",
+          paddingLeft: "20px",
+          paddingRight: "20px",
+        }}
         onClick={() => {
           if (portName === undefined) {
             return;
