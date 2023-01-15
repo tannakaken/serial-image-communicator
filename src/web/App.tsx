@@ -48,16 +48,17 @@ export const App = () => {
       nativeApi.connectSerial(portName, (ok) => {
         setConnecting(false);
         setConnectOk(ok);
-      })
+      });
     }
   }, [portName]);
   const [metadata, setMetadata] = useState("");
   const [image, setImage] = useState<string>(noImage);
   const [voltageData, setVoltageData] = useState<number[]>([]);
-  
+
   const [sending, setSending] = useState(false);
   return (
     <div className="container">
+      <h1>撮影した写真と電源データを取得します</h1>
       <select
         value={portName}
         onChange={(event) => {
@@ -70,23 +71,34 @@ export const App = () => {
           </option>
         ))}
       </select>
-        {portName !== undefined && !connecting && !connectOk && (
-          <div style={{color: "red"}}><p>ポートに接続できません。</p></div>
-        )}
-        <div style={{
+      {portName !== undefined && !connecting && !connectOk && (
+        <div style={{ color: "red" }}>
+          <p>ポートに接続できません。</p>
+        </div>
+      )}
+      <div
+        style={{
           display: "flex",
           flexDirection: "row",
           alignContent: "center",
-        }}>
-        <div style={{
-          display: "flex",
-          flexDirection: "column"
-        }}>
-          <img src={image} height="80%" style={{objectFit: "contain"}}  />
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            width: "50%",
+            flex: 1,
+          }}
+        >
+          <img src={image} style={{ objectFit: "contain" }} />
           <p>{metadata}</p>
         </div>
         {voltageData.length > 0 && (
           <Line
+            style={{
+              maxWidth: "50%",
+            }}
             data={{
               labels,
               datasets: [
@@ -95,8 +107,8 @@ export const App = () => {
                   data: voltageData,
                   borderColor: "rgb(255, 99, 132)",
                   backgroundColor: "rgba(255, 99, 132, 0.5)",
-                }
-              ]
+                },
+              ],
             }}
             options={{
               responsive: true,
@@ -104,8 +116,8 @@ export const App = () => {
                 title: {
                   display: true,
                   text: "電圧",
-                }
-              }
+                },
+              },
             }}
             id="chart-key"
           />

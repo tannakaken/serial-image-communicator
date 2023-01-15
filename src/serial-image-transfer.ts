@@ -50,7 +50,7 @@ export const sendSerialMessage = (listener: (metadata: string, base64String: str
             listener(completedString, "", [], true)
             return;
           }
-          if (completedString.startsWith("SpGnss E: Failed to read position data")) {
+          if (completedString.startsWith("SpGnss E:")) {
             console.warn(completedString);
             return;
           }
@@ -62,13 +62,9 @@ export const sendSerialMessage = (listener: (metadata: string, base64String: str
       } else if (imageDataWaiting) {
         processString(input, (completedString) => {
           console.warn("base64String: ", completedString);
-          if (completedString.startsWith("image not found")) {
-            console.warn(completedString);
-          } else {
-            base64String = completedString;
-            imageDataWaiting = false;
-            voltageDataWaiting = true;
-          }
+          base64String = completedString;
+          imageDataWaiting = false;
+          voltageDataWaiting = true;
         });
       } else if (voltageDataWaiting) {
         processString(input, (completedString) => {
